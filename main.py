@@ -1,8 +1,7 @@
 import requests
 from datetime import datetime
 import pytz
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -12,11 +11,15 @@ PING_URL = "https://guidancemate.com/run-cron?key=UHq38qh3q02@!"
 TARGET_HOURS = ['08:00', '20:00']
 PH_TZ = pytz.timezone("Asia/Manila")
 
+def is_time_near(target):
+    now = datetime.now(PH_TZ)
+    now_minutes = now.hour * 60 + now.minute
+    target_hour, target_minute = map(int, target.split(":"))
+    target_minutes = target_hour * 60 + target_minute
+    return abs(now_minutes - target_minutes) <= 5  # Acceptable ±5 minutes
+
 def should_ping():
-    now_ph = datetime.now(PH_TZ)
-    current_time = now_ph.strftime('%H:%M')
-    print(f"⏰ Current time in PH: {current_time}")
-    return current_time in TARGET_HOURS
+    return any(is_time_near(target) for target in TARGET_HOURS)
 
 def ping():
     try:
@@ -25,11 +28,8 @@ def ping():
     except Exception as e:
         print(f"❌ Error pinging URL: {e}")
 
-@app.api_route("/ping", methods=["GET", "HEAD"])
-def ping_endpoint(request: Request):
-    if request.method == "HEAD":
-        return JSONResponse(content={"message": "HEAD request received"}, status_code=200)
-
+@app.get("/ping")
+def ping_endpoint():
     if should_ping():
         ping()
         return {"message": "Ping sent successfully."}
