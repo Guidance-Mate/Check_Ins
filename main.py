@@ -29,6 +29,7 @@ def ping():
         print(f"❌ Error pinging URL: {e}")
 
 @app.get("/ping")
+@app.head("/ping")  # Allow both GET and HEAD requests
 def ping_endpoint():
     if should_ping():
         ping()
