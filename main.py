@@ -1,7 +1,8 @@
 import requests
 from datetime import datetime
 import pytz
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -24,8 +25,11 @@ def ping():
     except Exception as e:
         print(f"❌ Error pinging URL: {e}")
 
-@app.get("/ping")
-def ping_endpoint():
+@app.api_route("/ping", methods=["GET", "HEAD"])
+def ping_endpoint(request: Request):
+    if request.method == "HEAD":
+        return JSONResponse(content={"message": "HEAD request received"}, status_code=200)
+
     if should_ping():
         ping()
         return {"message": "Ping sent successfully."}
