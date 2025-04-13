@@ -1,6 +1,10 @@
 import requests
 from datetime import datetime
 import pytz
+from fastapi import FastAPI
+
+# Initialize FastAPI app
+app = FastAPI()
 
 # Settings
 PING_URL = "https://guidancemate.com/run-cron?key=UHq38qh3q02@!"
@@ -20,8 +24,14 @@ def ping():
     except Exception as e:
         print(f"❌ Error pinging URL: {e}")
 
-if __name__ == "__main__":
+@app.get("/ping")
+def ping_endpoint():
     if should_ping():
         ping()
+        return {"message": "Ping sent successfully."}
     else:
-        print("⏭ Not the scheduled time. No ping sent.")
+        return {"message": "Not the scheduled time. No ping sent."}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
