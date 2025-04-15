@@ -2,9 +2,20 @@ import requests
 from datetime import datetime
 import pytz
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 # Initialize FastAPI app
 app = FastAPI()
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Settings
 PING_URL = "https://guidancemate.com/run-cron?key=UHq38qh3q02@!"
@@ -16,7 +27,7 @@ def is_time_near(target):
     now_minutes = now.hour * 60 + now.minute
     target_hour, target_minute = map(int, target.split(":"))
     target_minutes = target_hour * 60 + target_minute
-    return abs(now_minutes - target_minutes) <= 5  # Acceptable ±5 minutes
+    return abs(now_minutes - target_minutes) <= 5  # ±5 minutes buffer
 
 def should_ping():
     return any(is_time_near(target) for target in TARGET_HOURS)
@@ -25,18 +36,18 @@ def ping():
     try:
         response = requests.get(PING_URL)
         print(f"📡 Ping sent. Response code: {response.status_code}")
+        return True
     except Exception as e:
         print(f"❌ Error pinging URL: {e}")
+        return False
 
-@app.get("/ping")
-@app.head("/ping")  # Allow both GET and HEAD requests
-def ping_endpoint():
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health_check():
     if should_ping():
         ping()
         return {"message": "Ping sent successfully."}
     else:
         return {"message": "Not the scheduled time. No ping sent."}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# For AWS Lambda or similar environments
+handler = Mangum(app)
