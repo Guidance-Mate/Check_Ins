@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
+from fastapi.responses import JSONResponse
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -27,7 +27,7 @@ def is_time_near(target):
     now_minutes = now.hour * 60 + now.minute
     target_hour, target_minute = map(int, target.split(":"))
     target_minutes = target_hour * 60 + target_minute
-    return abs(now_minutes - target_minutes) <= 5  # ±5 minutes buffer
+    return abs(now_minutes - target_minutes) <= 5
 
 def should_ping():
     return any(is_time_near(target) for target in TARGET_HOURS)
@@ -45,9 +45,10 @@ def ping():
 def health_check():
     if should_ping():
         ping()
-        return {"message": "Ping sent successfully."}
+        return JSONResponse(content={"message": "Ping sent successfully."}, status_code=200)
     else:
-        return {"message": "Not the scheduled time. No ping sent."}
+        return JSONResponse(content={"message": "Not the scheduled time. No ping sent."}, status_code=200)
 
-# For AWS Lambda or similar environments
-handler = Mangum(app)
+@app.get("/")
+def root():
+    return JSONResponse(content={"status": "ok"}, status_code=200)
