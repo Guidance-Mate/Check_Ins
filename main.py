@@ -63,6 +63,14 @@ def health_check():
     else:
         return JSONResponse(content={"message": "Not a scheduled ping time or day."}, status_code=200)
 
+@app.get("/checkhealth" , methods=["GET", "HEAD"]))
+def check_health_now():
+    success = ping()
+    if success:
+        return JSONResponse(content={"message": "Immediate ping sent."}, status_code=200)
+    else:
+        return JSONResponse(content={"message": "Ping failed."}, status_code=500)
+
 @app.get("/")
 def root():
     return JSONResponse(content={"status": "ok"}, status_code=200)
