@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Settings
-PING_URL = "https://guidancemate.com/run-cron?key=UHq38qh3q02@!"
+PING_URL = "https://guidancemate.com/run-cron?=bX93g7LkT29nZ5Aq"
 TARGET_HOURS = ['08:00', '20:00']
 PH_TZ = pytz.timezone("Asia/Manila")
 
