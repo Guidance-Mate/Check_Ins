@@ -1,14 +1,13 @@
 import requests
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 import pytz
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,10 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Settings
-PING_URL = "https://guidancemate.com/run-cron?=bX93g7LkT29nZ5Aq"
+# Constants
+PING_URL = "https://guidancemate.com/run-cron?key=bX93g7LkT29nZ5Aq"
 TARGET_HOURS = ['08:00', '20:00']
 PH_TZ = pytz.timezone("Asia/Manila")
+PING_DAY_SEED_DATE = datetime(2025, 4, 23).date()  # base date for pattern
 
 def is_time_near(target):
     now = datetime.now(PH_TZ)
@@ -29,8 +29,22 @@ def is_time_near(target):
     target_minutes = target_hour * 60 + target_minute
     return abs(now_minutes - target_minutes) <= 5
 
+def is_ping_day():
+    today = datetime.now(PH_TZ).date()
+    days_since_seed = (today - PING_DAY_SEED_DATE).days
+
+    # Simulate a repeating pattern: [2, 3, 2, 3, ...]
+    pattern = [2, 3]
+    total = 0
+    index = 0
+    while total < days_since_seed:
+        total += pattern[index % len(pattern)]
+        index += 1
+
+    return total == days_since_seed
+
 def should_ping():
-    return any(is_time_near(target) for target in TARGET_HOURS)
+    return is_ping_day() and any(is_time_near(t) for t in TARGET_HOURS)
 
 def ping():
     try:
@@ -47,7 +61,7 @@ def health_check():
         ping()
         return JSONResponse(content={"message": "Ping sent successfully."}, status_code=200)
     else:
-        return JSONResponse(content={"message": "Not the scheduled time. No ping sent."}, status_code=200)
+        return JSONResponse(content={"message": "Not a scheduled ping time or day."}, status_code=200)
 
 @app.get("/")
 def root():
