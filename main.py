@@ -18,6 +18,7 @@ app.add_middleware(
 
 # Constants
 PING_URL = "https://guidancemate.com/run-cron?key=y7WqP93aZkLm8VtB"
+
 TARGET_HOURS = ['08:00', '20:00']
 PH_TZ = pytz.timezone("Asia/Manila")
 PING_DAY_SEED_DATE = datetime(2025, 4, 23).date()  # base date for pattern
